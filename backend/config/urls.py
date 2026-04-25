@@ -20,13 +20,15 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-      # App URLs
+      # App API
     path('api/users/', include('users.urls')),
     path('api/shoes/', include('shoes.urls')),
     path('api/orders/', include('orders.urls')),
     path('api/reviews/', include('reviews.urls')),
     path('api/wishlist/', include('wishlist.urls')),
     path('api/payments/', include('payments.urls')),
+     
+     #Auth (JKT login here)
     path('api/auth/', include('users.urls')),
 
 ]
