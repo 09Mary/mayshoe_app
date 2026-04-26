@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function Login() {
+function Login({ setIsLoggedIn}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -21,12 +21,15 @@ function Login() {
 
       const data = await res.json();
 
-      if (data.access) {
-        localStorage.setItem("token", data.access);
-        localStorage.setItem("refresh", data.refresh);
+     if (data.access) { 
+      localStorage.setItem("token", data.access);
+      localStorage.setItem("refresh", data.refresh); 
+      
 
-        alert("Login successful!");
-        window.location.href = "/";
+      setIsLoggedIn(true); // 🔥 important
+
+      window.location.href = "/";
+
       } else {
         alert("Login failed");
       }
@@ -36,7 +39,7 @@ function Login() {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <form
         onSubmit={handleLogin}
         className="bg-white p-6 shadow-md rounded w-80"

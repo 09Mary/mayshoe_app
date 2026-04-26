@@ -5,70 +5,83 @@ import Navbar from "./components/Navbar";
 import ProductCard from "./components/ProductCard";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Orders from "./pages/Order";
+import Home from "./pages/Home";
+import Shop from "./pages/Shop";
+import ProductDetail from "./ProductDetail";
+import Wishlist from "./pages/Wishlist";
+import LaunchPage from "./pages/LaunchPage";
+import ProductPage from "./pages/ProductPage";
+
+
+import { getUser, isAuthenticated } from "./utils/auth";
 
 function App() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
 
+  // 🔐 Check login on load
+  useEffect(() => {
+    setIsLoggedIn(isAuthenticated());
+    setUser(getUser());
+  }, []);
+
+  // 👟 Fetch shoes
   useEffect(() => {
     fetch("http://127.0.0.1:8000/api/shoes/")
       .then((res) => res.json())
       .then((data) => setProducts(data));
   }, []);
 
-   // ADDING TO CART
   const addToCart = (product) => {
-    const token = localStorage.getItem("token");
+    setCart((prev) => {
+      const exists = prev.find((item) => item.id === product.id);
 
-  // Allow guest browsing BUT block checkout dependency later
-  if (!token) {
-    alert("You are browsing as guest. Login required for checkout.");
-  }
+      if (exists) {
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, qty: item.qty + 1 }
+            : item
+        );
+      }
 
-  setCart((prev) => {
-    const exists = prev.find((item) => item.id === product.id);
+      return [...prev, { ...product, qty: 1 }];
+    });
+  };
 
-    if (exists) {
-      return prev.map((item) =>
-        item.id === product.id
-          ? { ...item, qty: item.qty + 1 }
-          : item
-      );
-    }
-
-    return [...prev, { ...product, qty: 1 }];
-  });
-};
   return (
     <>
-      <Navbar cartCount={cart.length} />
+      <Navbar
+        cartCount={cart.length}
+        isLoggedIn={isLoggedIn}
+        setIsLoggedIn={setIsLoggedIn}
+        user={user}
+      />
 
       <Routes>
-        {/* Home */}
-        <Route
-          path="/"
-          element={
-            <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  addToCart={addToCart}
-                />
-              ))}
-            </div>
-          }
-        />
-
-        {/* Cart Page */}
+       <Route
+        path="/"
+        element={<Home addToCart={addToCart} />}
+       />
+              
         <Route
           path="/cart"
           element={<Cart cart={cart} setCart={setCart} />}
         />
-        {/* Login Page */}
-        <Route
-         path="/login" 
-         element={<Login />} />
+
+        <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/shop" element={<Shop addToCart={addToCart} />} />
+        <Route path="/product/:id" element={<ProductDetail addToCart={addToCart} />} />
+        <Route path="/wishlist"  element={<Wishlist addToCart={addToCart} />} />
+        <Route path="/launch" element={<LaunchPage />} />
+        <Route path="/shoe/:id" element={<ProductPage />} />
+
+
       </Routes>
     </>
   );

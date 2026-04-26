@@ -55,7 +55,7 @@ function Cart({ cart, setCart }) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${localStorage.getItem("token")}`
       },
       body: JSON.stringify(orderData)
     });
@@ -70,17 +70,17 @@ function Cart({ cart, setCart }) {
   };
   
  return (
-    <div className="p-6">
+    <div className="max-w-3x1 mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
 
       {cart.length === 0 ? (
-        <p>Your cart is empty</p>
+        <p className="text-gray-500">Your cart is empty</p>
       ) : (
         <>
           {cart.map((item) => (
             <div
               key={item.id}
-              className="bg-white p-4 mb-3 shadow rounded flex justify-between"
+              className="flex justify-between items-center bg-white p-4 rounded shadow mb-3"
             >
               <div>
                 <h2 className="font-semibold">{item.name}</h2>
@@ -91,7 +91,7 @@ function Cart({ cart, setCart }) {
             </div>
           ))}
 
-          <h2 className="text-xl font-bold mt-4">
+          <h2 className="text-2xl font-bold mt-6 text-right">
             Total: Ksh {total}
           </h2>
 

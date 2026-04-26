@@ -5,4 +5,7 @@ from django.contrib import admin
 from .models import Shoe
 
 # This shows the Shoe model
-admin.site.register(Shoe)
+@admin.register(Shoe)
+class ShoeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'price', 'category')
+    list_filter = ('category',)

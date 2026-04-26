@@ -2,6 +2,14 @@ from django.db import models
 from django.utils import timezone
 
 class Shoe(models.Model):
+    CATEGORY_CHOICES = (
+        ('sneakers', 'Sneakers'),
+        ('running', 'Running'),
+        ('casual', 'Casual'),
+        ('boots', 'Boots'),
+    )
+
+    
     name = models.CharField(max_length=255)
     brand = models.CharField(max_length=100, null=True, blank=True)
 
@@ -13,6 +21,9 @@ class Shoe(models.Model):
 
     description = models.TextField(null=True, blank=True)
     image = models.ImageField(upload_to='shoes/', null=True, blank=True)
+    
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='sneakers')
+
 
     # 🔥 Availability system
     availability_start = models.DateTimeField(null=True, blank=True)

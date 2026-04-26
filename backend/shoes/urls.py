@@ -1,7 +1,11 @@
-from rest_framework.routers import DefaultRouter
-from .views import ShoeViewSet
+# shoes/urls.py
 
-router = DefaultRouter()
-router.register('', ShoeViewSet,)
+from django.urls import path
+from .views import categories, latest_shoe, shoe_detail, timely_shoes
 
-urlpatterns = router.urls
+urlpatterns = [
+    path("categories/", categories),
+    path("shoes/latest/", latest_shoe),
+    path("shoes/timely/", timely_shoes),
+    path("shoes/<int:id>/", shoe_detail), 
+    ]
