@@ -1,4 +1,8 @@
+import { useNavigate } from "react-router-dom";
+
 function Cart({ cart, setCart }) {
+  const navigate = useNavigate();
+
   // ➖ Remove item
   const removeItem = (id) => {
     setCart(cart.filter((item) => item.id !== id));
@@ -8,9 +12,7 @@ function Cart({ cart, setCart }) {
   const increaseQty = (id) => {
     setCart(
       cart.map((item) =>
-        item.id === id
-          ? { ...item, qty: item.qty + 1 }
-          : item
+        item.id === id ? { ...item, qty: item.qty + 1 } : item
       )
     );
   };
@@ -26,51 +28,26 @@ function Cart({ cart, setCart }) {
     );
   };
 
-  //  Total price
+  // 💰 Total price
   const total = cart.reduce(
     (sum, item) => sum + item.price * item.qty,
     0
   );
- 
-  // HANDLECHECKOUT
-  const handleCheckout = async () => {
-  const token = localStorage.getItem("token");
 
-  if (!token) {
-    alert("Please login to continue checkout");
-    window.location.href = "/login";
-    return;
-  }
+  // 🛒 Checkout (ONLY navigation)
+  const handleCheckout = () => {
+    const token = localStorage.getItem("token");
 
-  const orderData = {
-    items: cart.map(item => ({
-      product_id: item.id,
-      qty: item.qty
-    })),
-    total: total
+    if (!token) {
+      alert("Please login or sign up to continue checkout");
+      navigate("/auth", { state: { from: "/checkout" } });
+    } else {
+      navigate("/checkout");
+    }
   };
 
-  try {
-    const res = await fetch("http://127.0.0.1:8000/api/orders/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify(orderData)
-    });
-
-    if (!res.ok) throw new Error("Checkout failed");
-
-    setCart([]);
-    alert("Order placed successfully!");
-  } catch (err) {
-    console.log(err);
-  }
-  };
-  
- return (
-    <div className="max-w-3x1 mx-auto p-6">
+  return (
+    <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
 
       {cart.length === 0 ? (
@@ -82,12 +59,45 @@ function Cart({ cart, setCart }) {
               key={item.id}
               className="flex justify-between items-center bg-white p-4 rounded shadow mb-3"
             >
-              <div>
-                <h2 className="font-semibold">{item.name}</h2>
-                <p>Ksh {item.price}</p>
+              {/* LEFT SIDE */}
+              <div className="flex items-center gap-4">
+                <img
+                  src={`http://127.0.0.1:8000${item.image}`}
+                  alt={item.name}
+                  className="w-16 h-16 object-cover rounded"
+                />
+
+                <div>
+                  <h2 className="font-semibold">{item.name}</h2>
+                  <p>Ksh {item.price}</p>
+                </div>
               </div>
 
-              <span>Qty: {item.qty}</span>
+              {/* RIGHT SIDE */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => decreaseQty(item.id)}
+                  className="px-2 bg-gray-200 rounded"
+                >
+                  -
+                </button>
+
+                <span>{item.qty}</span>
+
+                <button
+                  onClick={() => increaseQty(item.id)}
+                  className="px-2 bg-gray-200 rounded"
+                >
+                  +
+                </button>
+
+                <button
+                  onClick={() => removeItem(item.id)}
+                  className="text-red-500 ml-3"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           ))}
 
@@ -95,12 +105,11 @@ function Cart({ cart, setCart }) {
             Total: Ksh {total}
           </h2>
 
-          {/* Checkout Button */}
           <button
             onClick={handleCheckout}
-            className="mt-4 bg-green-600 text-white px-6 py-2 rounded"
+            className="mt-4 w-full bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700"
           >
-            Checkout
+            Proceed to Checkout
           </button>
         </>
       )}

@@ -7,8 +7,12 @@ function ProductDetail({ addToCart }) {
 
   useEffect(() => {
     fetch(`http://127.0.0.1:8000/api/shoes/${id}/`)
-      .then((res) => res.json())
-      .then((data) => setProduct(data));
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.json();
+      })
+      .then((data) => setProduct(data))
+      .catch((err) => console.error(err));
   }, [id]);
 
   if (!product) {
@@ -18,21 +22,19 @@ function ProductDetail({ addToCart }) {
   return (
     <div className="p-6 max-w-5xl mx-auto grid md:grid-cols-2 gap-8">
       
-      {/* IMAGE */}
       <img
-        src={product.image}
+        src={`http://127.0.0.1:8000${product.image}`}
         alt={product.name}
         className="w-full h-96 object-cover rounded-lg"
       />
 
-      {/* DETAILS */}
       <div>
         <h1 className="text-3xl font-bold mb-3">
           {product.name}
         </h1>
 
         <p className="text-gray-500 mb-4">
-          Premium quality sneaker for everyday wear.
+          {product.description || "No description available"}
         </p>
 
         <p className="text-2xl font-bold mb-6">
@@ -40,7 +42,7 @@ function ProductDetail({ addToCart }) {
         </p>
 
         <button
-          onClick={() => window.history.back(product)}
+          onClick={() => addToCart(product)}
           className="bg-black text-white px-6 py-3 rounded hover:bg-gray-800"
         >
           Add to Cart

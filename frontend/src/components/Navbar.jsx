@@ -75,6 +75,7 @@ function Navbar({ cartCount,isLoggedIn,setIsLoggedIn,user }) {
         >
           Sign Up
         </Link>
+        <Link to="/profile">My Account</Link>
       </div>
     </nav>
   );

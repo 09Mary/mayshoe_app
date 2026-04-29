@@ -5,6 +5,16 @@ from rest_framework.response import Response
 from django.utils import timezone
 from .models import Shoe
 from .serializers import ShoeSerializer
+from rest_framework import viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import ShoeFilter
+
+class ShoeViewSet(viewsets.ModelViewSet):
+    queryset = Shoe.objects.all().order_by("-id")
+    serializer_class = ShoeSerializer
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ShoeFilter
 
 
 # ✅ Categories (derived)

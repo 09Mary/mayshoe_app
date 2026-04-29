@@ -7,6 +7,7 @@ class Shoe(models.Model):
         ('running', 'Running'),
         ('casual', 'Casual'),
         ('boots', 'Boots'),
+        ('heels', 'Heels'),
     )
 
     
