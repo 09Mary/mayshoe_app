@@ -133,6 +133,12 @@ function Login({ setIsLoggedIn }) {
         <button className="w-full bg-black text-white p-2 rounded">
           Login
         </button>
+
+        <p className="text-center text-sm mt-3">
+          <a href="/reset-password" className="text-gray-500 hover:text-black underline">
+            Forgot password?
+          </a>
+        </p>
       </form>
     </div>
   );

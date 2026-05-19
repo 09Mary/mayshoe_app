@@ -1,91 +1,95 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getToken } from "../utils/auth";
 
-function Orders() {
+const API = "http://127.0.0.1:8000/api";
+
+const STATUS_COLOURS = {
+  pending: "badge-warning",
+  paid: "badge-success",
+  shipped: "badge-info",
+  delivered: "badge-accent",
+  cancelled: "badge-error",
+};
+
+export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      const token = localStorage.getItem("token");
+    const token = getToken();
+    if (!token) {
+      navigate("/auth", { state: { from: "/orders" } });
+      return;
+    }
 
-      if (!token) {
-        alert("Please login to view your orders");
-        window.location.href = "/login";
-        return;
-      }
-
-      try {
-        const res = await fetch("http://127.0.0.1:8000/api/orders/", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch orders");
-
-        const data = await res.json();
-        console.log("Orders:", data); // 🔍 important for debugging
-        setOrders(data);
-      } catch (err) {
-        console.error(err);
-        alert("Could not load orders");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
+    fetch(`${API}/orders/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to fetch orders");
+        return r.json();
+      })
+      .then((data) => setOrders(Array.isArray(data) ? data : data.results ?? []))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="p-6">Loading orders...</p>;
+  if (loading) return <p className="p-6 text-gray-400">Loading orders…</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">My Orders</h1>
 
       {orders.length === 0 ? (
-        <p className="text-gray-500">No orders yet</p>
+        <p className="text-gray-500">No orders yet.</p>
       ) : (
         orders.map((order) => (
-          <div
-            key={order.id}
-            className="bg-white p-4 mb-4 shadow rounded"
-          >
-            <p className="font-semibold mb-2">
-              Order #{order.id}
-            </p>
+          <div key={order.id} className="bg-white p-5 mb-4 shadow rounded-xl">
+            <div className="flex justify-between items-start mb-3">
+              <div>
+                <p className="font-semibold">Order #{order.id}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {new Date(order.created_at).toLocaleDateString("en-KE", {
+                    day: "numeric", month: "short", year: "numeric",
+                  })}
+                </p>
+              </div>
+              <span className={`badge ${STATUS_COLOURS[order.status] || "badge-ghost"}`}>
+                {order.status}
+              </span>
+            </div>
 
-            <p className="text-sm text-gray-500 mb-2">
-              Total: Ksh {order.total || order.total_price}
-            </p>
+            {order.shipping_address && (
+              <p className="text-sm text-gray-500 mb-3">
+                <span className="font-medium">Ship to:</span> {order.shipping_address}
+              </p>
+            )}
 
-            {/* 🧾 ORDER ITEMS */}
             {order.items && order.items.length > 0 ? (
-              <div className="mt-3 border-t pt-3">
-                {order.items.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between text-sm mb-1"
-                  >
-                    <span>
-                      {item.product_name || item.product} × {item.qty || item.quantity}
+              <div className="border-t pt-3 space-y-1">
+                {order.items.map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-gray-700">
+                      {item.shoe_name ?? `Shoe #${item.shoe}`} × {item.quantity}
                     </span>
-                    <span>
-                      Ksh {item.price}
-                    </span>
+                    <span>Ksh {Number(item.price).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 text-sm">
-                No item details available
-              </p>
+              <p className="text-gray-400 text-sm border-t pt-3">No item details available.</p>
             )}
+
+            <p className="text-right font-bold mt-3">
+              Total: Ksh {Number(order.total_price).toLocaleString()}
+            </p>
           </div>
         ))
       )}
     </div>
   );
 }
-
-export default Orders;
