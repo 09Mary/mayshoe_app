@@ -6,18 +6,19 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = "__all__"
-        read_only_fields = ["user", "status", "checkout_url"]
+        read_only_fields = [
+            "user", "status", "checkout_url",
+            "mpesa_checkout_request_id", "mpesa_receipt_number",
+        ]
 
     def validate(self, data):
         order = data["order"]
-
-        # 🔐 SECURITY: verify order belongs to user
         request = self.context["request"]
+
         if order.user != request.user:
             raise serializers.ValidationError("Invalid order")
 
-        # 🔐 SECURITY: verify amount
-        if float(data["amount"]) != float(order.total):
+        if float(data["amount"]) != float(order.total_price):
             raise serializers.ValidationError("Amount mismatch")
 
         return data

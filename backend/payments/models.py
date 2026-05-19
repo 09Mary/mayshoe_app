@@ -19,6 +19,9 @@ class Payment(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="PENDING")
     checkout_url = models.URLField(blank=True, null=True)
 
+    mpesa_checkout_request_id = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    mpesa_receipt_number = models.CharField(max_length=50, blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

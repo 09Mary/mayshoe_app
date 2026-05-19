@@ -1,17 +1,25 @@
-# shoes/views.py
-
+from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import Shoe
 from .serializers import ShoeSerializer
-from rest_framework import viewsets
-from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ShoeFilter
+
+
+class IsAdminOrReadOnly(permissions.BasePermission):
+    """Allow anyone to read; only staff can create/edit/delete."""
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user and request.user.is_staff
+
 
 class ShoeViewSet(viewsets.ModelViewSet):
     queryset = Shoe.objects.all().order_by("-id")
     serializer_class = ShoeSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
     filter_backends = [DjangoFilterBackend]
     filterset_class = ShoeFilter
