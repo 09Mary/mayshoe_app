@@ -11,6 +11,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()   
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def get_serializer_class(self):

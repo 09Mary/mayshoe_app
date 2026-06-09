@@ -22,6 +22,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminReviews from "./pages/admin/AdminReviews";
+import VerifyEmailSent from "./pages/VerifyEmail";
 
 import { getUser, isAuthenticated } from "./utils/auth";
 
@@ -77,6 +78,8 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+
 
         {/* Customer */}
         <Route path="/cart" element={<Cart cart={cart} setCart={setCart} />} />

@@ -1,65 +1,87 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-const API = "http://127.0.0.1:8000/api";
-
-export default function VerifyEmail() {
-  const [params] = useSearchParams();
+function VerifyEmail() {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [state, setState] = useState("verifying"); // verifying | success | error
+  const token = searchParams.get("token");
+
+  const [status, setStatus] = useState("loading"); // loading | success | error
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const token = params.get("token");
     if (!token) {
-      setState("error");
+      setStatus("error");
       setMessage("No verification token found in the link.");
       return;
     }
-    fetch(`${API}/auth/verify-email/?token=${token}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.detail && !data.detail.toLowerCase().includes("invalid")) {
-          setState("success");
-          setTimeout(() => navigate("/auth"), 3000);
+
+    const verify = async () => {
+      try {
+        const res = await fetch(
+          `http://127.0.0.1:8000/api/auth/verify-email/?token=${token}`
+        );
+        const data = await res.json();
+
+        if (res.ok) {
+          setStatus("success");
+          setMessage(data.detail || "Email verified successfully.");
         } else {
-          setState("error");
-          setMessage(data.detail || "Verification failed.");
+          setStatus("error");
+          setMessage(data.detail || "Invalid or expired verification link.");
         }
-      })
-      .catch(() => {
-        setState("error");
-        setMessage("Could not connect to the server.");
-      });
-  }, []);
+      } catch {
+        setStatus("error");
+        setMessage("Could not connect to the server. Try again.");
+      }
+    };
+
+    verify();
+  }, [token]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white rounded-xl shadow p-10 max-w-md w-full text-center">
-        {state === "verifying" && (
+      <div className="bg-white p-8 rounded-xl shadow-md w-96 text-center">
+
+        {status === "loading" && (
           <>
-            <div className="text-4xl mb-4">⏳</div>
-            <h2 className="text-xl font-bold">Verifying your email…</h2>
+            <div className="text-5xl mb-4">⏳</div>
+            <h2 className="text-xl font-bold mb-2">Verifying your email…</h2>
+            <p className="text-gray-500 text-sm">Please wait a moment.</p>
           </>
         )}
-        {state === "success" && (
+
+        {status === "success" && (
           <>
-            <div className="text-4xl mb-4">✅</div>
+            <div className="text-5xl mb-4">✅</div>
             <h2 className="text-xl font-bold mb-2">Email verified!</h2>
-            <p className="text-gray-600">Redirecting you to login…</p>
+            <p className="text-gray-600 text-sm mb-6">{message}</p>
+            <button
+              onClick={() => navigate("/login", { replace: true })}
+              className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition-colors"
+            >
+              Log in to your account
+            </button>
           </>
         )}
-        {state === "error" && (
+
+        {status === "error" && (
           <>
-            <div className="text-4xl mb-4">❌</div>
+            <div className="text-5xl mb-4">❌</div>
             <h2 className="text-xl font-bold mb-2">Verification failed</h2>
-            <p className="text-gray-600 mb-4">{message}</p>
-            <button onClick={() => navigate("/auth")} className="btn btn-outline btn-sm">
+            <p className="text-gray-600 text-sm mb-6">{message}</p>
+            <button
+              onClick={() => navigate("/login", { replace: true })}
+              className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition-colors"
+            >
               Back to login
             </button>
           </>
         )}
+
       </div>
     </div>
   );
 }
+
+export default VerifyEmail;

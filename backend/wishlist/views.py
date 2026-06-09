@@ -4,6 +4,7 @@ from .serializers import WishlistSerializer
 
 
 class WishlistViewSet(viewsets.ModelViewSet):
+    queryset = Wishlist.objects.all()
     serializer_class = WishlistSerializer
     permission_classes = [permissions.IsAuthenticated]
 
