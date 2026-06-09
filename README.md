@@ -32,10 +32,14 @@ mayshoe_app/
 
 ### Backend
 
+> **Requires Python 3.12+** (Django 6 will not install on older versions). On macOS the system `python3` is often 3.9 — use a newer interpreter, e.g. `python3.13` from Homebrew.
+
 ```bash
 cd backend
+python3.13 -m venv venv        # any Python >= 3.12
+source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # fill in real values
+cp .env.example .env           # fill in real values
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
@@ -123,6 +127,11 @@ Sandbox test phone: `254708374149` · PIN: any digits · shortcode: `174379`
 
 ## Changes log
 
+### Bug fixes & setup
+- **`backend/reviews/urls.py`** & **`backend/wishlist/urls.py`** — Router registration was missing a `basename`. Because these viewsets define `get_queryset()` instead of a `queryset` attribute, DRF raised at import time, which crashed the entire URLconf and made *every* API endpoint (including login/register) fail. Added explicit `basename`.
+- **`backend/requirements.txt`** — Added `Pillow` (required by `Shoe.image` `ImageField`; Django's system check fails without it).
+- **`backend/users/serializers.py`** & **`backend/users/views.py`** — New accounts are now auto-activated when `DEBUG=True` so you can register and log in locally without an SMTP server; email verification is still enforced in production.
+
 ### M-Pesa integration
 - **`backend/payments/mpesa.py`** *(new)* — Daraja service: `get_access_token()`, `initiate_stk_push()`, `normalize_phone()` (handles `07…`, `+254…`, `254…` formats)
 - **`backend/payments/models.py`** — Added `mpesa_checkout_request_id` (indexed) and `mpesa_receipt_number` fields
@@ -162,9 +171,11 @@ To make a user staff: `python manage.py shell` → `User.objects.filter(username
 In development, emails print to the terminal (console backend). For production set `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend` and the SMTP env vars.
 
 **Email verification** — triggered on registration:
-1. User registers → account inactive, verification email sent
-2. User clicks link → `/verify-email?token=<uuid>` → account activated
-3. User can now log in
+- **When `DEBUG=True` (development):** accounts are activated immediately on registration so you can log in without a real mail server. No verification email is required.
+- **When `DEBUG=False` (production):**
+  1. User registers → account inactive, verification email sent
+  2. User clicks link → `/verify-email?token=<uuid>` → account activated
+  3. User can now log in
 
 **Password reset**:
 1. User visits `/reset-password`, enters email
