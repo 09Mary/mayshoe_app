@@ -43,6 +43,12 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        if user.is_active:
+            # Dev auto-activation: skip verification, account is ready to use.
+            return Response(
+                {"detail": "Account created. You can now log in."},
+                status=status.HTTP_201_CREATED,
+            )
         _send_verification_email(user)
         return Response(
             {"detail": "Account created. Check your email to verify your account."},
