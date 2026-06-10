@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -22,11 +23,15 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'password')
 
     def create(self, validated_data):
+        # In development (DEBUG=True) email only prints to the console, so
+        # activate accounts immediately. Production keeps email verification.
+        auto_activate = settings.DEBUG
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
-            is_active=False,
+            is_active=auto_activate,
+            is_email_verified=auto_activate,
         )
         return user
 

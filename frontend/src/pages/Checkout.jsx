@@ -66,9 +66,12 @@ function CartSummary({ cart, onChangeQty }) {
     <div className="bg-white border border-gray-100 rounded-xl p-5 mb-4">
       {cart.map((item) => (
         <div key={item.id} className="flex items-center gap-3 py-3 border-b border-gray-100 last:border-none">
-          <div className="w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-xl flex-shrink-0">
-            👟
-          </div>
+          <img
+            src={item.image?.startsWith("http") ? item.image : `http://127.0.0.1:8000${item.image}`}
+            alt={item.name}
+            onError={(e) => { e.target.src = "https://placehold.co/48x48?text=shoe"; }}
+            className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
             <p className="text-xs text-gray-400 mt-0.5">
@@ -311,7 +314,8 @@ function Checkout({ cart: initialCart, setCart }) {
 
       if (!orderRes.ok) {
         const err = await orderRes.json();
-        throw new Error(err.detail || "Order creation failed");
+        const errMsg = err.detail || (Array.isArray(err) ? err.join(" ") : JSON.stringify(err));
+        throw new Error(errMsg);
       }
 
       const order = await orderRes.json();

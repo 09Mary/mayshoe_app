@@ -62,7 +62,7 @@ function Cart({ cart, setCart }) {
               {/* LEFT SIDE */}
               <div className="flex items-center gap-4">
                 <img
-                  src={`http://127.0.0.1:8000${item.image}`}
+                  src={item.image?.startsWith("http") ? item.image : `http://127.0.0.1:8000${item.image}`}
                   alt={item.name}
                   className="w-16 h-16 object-cover rounded"
                 />

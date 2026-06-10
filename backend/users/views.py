@@ -34,6 +34,39 @@ def _send_verification_email(user):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username', '')
+
+        # In development, auto-activate any account that's stuck inactive
+        # so you never get a mysterious 401 during local testing.
+        if settings.DEBUG:
+            try:
+                user = User.objects.get(username=username)
+                if not user.is_active:
+                    user.is_active = True
+                    user.is_email_verified = True
+                    user.save(update_fields=['is_active', 'is_email_verified'])
+            except User.DoesNotExist:
+                pass  # will fail naturally below with wrong credentials
+
+        response = super().post(request, *args, **kwargs)
+
+        # Attach user info to the response so the frontend can store it
+        if response.status_code == 200:
+            try:
+                user = User.objects.get(username=username)
+                response.data['user'] = {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'is_staff': user.is_staff,
+                    'role': user.role,
+                }
+            except User.DoesNotExist:
+                pass
+
+        return response
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -43,6 +76,11 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        if user.is_active:
+            return Response(
+                {"detail": "Account created. You can now log in."},
+                status=status.HTTP_201_CREATED,
+            )
         _send_verification_email(user)
         return Response(
             {"detail": "Account created. Check your email to verify your account."},
@@ -64,7 +102,7 @@ class VerifyEmailView(APIView):
 
         user.is_active = True
         user.is_email_verified = True
-        user.email_verification_token = uuid.uuid4()  # rotate so token can't be reused
+        user.email_verification_token = uuid.uuid4()
         user.save(update_fields=['is_active', 'is_email_verified', 'email_verification_token'])
         return Response({"detail": "Email verified. You can now log in."})
 
@@ -89,7 +127,7 @@ class PasswordResetView(APIView):
                 fail_silently=False,
             )
         except User.DoesNotExist:
-            pass  # don't reveal whether the email exists
+            pass
         return Response({"detail": "If that email is registered you will receive a reset link shortly."})
 
 

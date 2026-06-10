@@ -17,24 +17,22 @@ import Profile from "./pages/Profile";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
 import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import Dashboard from "./pages/admin/Dashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminReviews from "./pages/admin/AdminReviews";
-import VerifyEmailSent from "./pages/VerifyEmail";
+import VerifyEmailSent from "./pages/VerifyEmailSent";
 
 import { getUser, isAuthenticated } from "./utils/auth";
 
 function App() {
   const [cart, setCart] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => isAuthenticated());
+  const [user, setUser] = useState(() => getUser());
 
-  useEffect(() => {
-    setIsLoggedIn(isAuthenticated());
-    setUser(getUser());
-  }, []);
+
 
   useEffect(() => {
     const savedCart = localStorage.getItem("cart");
@@ -74,19 +72,21 @@ function App() {
         <Route path="/shop" element={<Shop addToCart={addToCart} />} />
         <Route path="/product/:id" element={<ProductDetail addToCart={addToCart} />} />
         <Route path="/launch" element={<LaunchPage />} />
-        <Route path="/auth" element={<Auth />} />
+        <Route path="/auth" element={<Auth setIsLoggedIn={setIsLoggedIn}/>} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-email-sent" element={<VerifyEmailSent />} />
+        
 
 
         {/* Customer */}
         <Route path="/cart" element={<Cart cart={cart} setCart={setCart} />} />
         <Route path="/checkout" element={<Checkout cart={cart} setCart={setCart} />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/wishlist" element={<Wishlist addToCart={addToCart} />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><Wishlist addToCart={addToCart} /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
         {/* Admin */}
         <Route path="/admin-dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
