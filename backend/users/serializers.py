@@ -16,22 +16,24 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password]
+    )
 
     class Meta:
-        model = User
+        model  = User
         fields = ('username', 'email', 'password')
 
     def create(self, validated_data):
-        # In development (DEBUG=True) email only prints to the console, so
-        # activate accounts immediately. Production keeps email verification.
-        auto_activate = settings.DEBUG
+        # Always create inactive — email verification is ALWAYS required.
+        # In DEBUG mode, the console email backend prints the link to the
+        # terminal so you can still test without a real SMTP server.
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
-            is_active=auto_activate,
-            is_email_verified=auto_activate,
+            is_active=False,
+            is_email_verified=False,
         )
         return user
 
@@ -41,6 +43,6 @@ class PasswordResetSerializer(serializers.Serializer):
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
-    uid = serializers.CharField()
-    token = serializers.CharField()
+    uid          = serializers.CharField()
+    token        = serializers.CharField()
     new_password = serializers.CharField(write_only=True, validators=[validate_password])

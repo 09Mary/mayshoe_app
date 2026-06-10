@@ -304,7 +304,7 @@ function Checkout({ cart: initialCart, setCart }) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          items: cart.map((item) => ({ shoe: item.id, quantity: item.qty })),
+          items: cart.map((item) => ({ shoe: item.id, quantity: item.qty, variant_id: item.variant_id || null })),
           payment_method: "mpesa",
           shipping_address: `${form.address}, ${form.city}`,
           first_name: form.firstName,

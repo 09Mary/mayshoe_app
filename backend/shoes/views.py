@@ -1,15 +1,15 @@
-from rest_framework import viewsets, permissions
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from .filters import ShoeFilter
 from .models import Shoe
 from .serializers import ShoeSerializer
-from .filters import ShoeFilter
 
 
 class IsAdminOrReadOnly(permissions.BasePermission):
-    """Allow anyone to read; only staff can create/edit/delete."""
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
@@ -17,50 +17,58 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 
 class ShoeViewSet(viewsets.ModelViewSet):
-    queryset = Shoe.objects.all().order_by("-id")
-    serializer_class = ShoeSerializer
+    queryset           = Shoe.objects.filter(is_active=True).prefetch_related('sizes').order_by('-id')
+    serializer_class   = ShoeSerializer
     permission_classes = [IsAdminOrReadOnly]
+    filter_backends    = [DjangoFilterBackend]
+    filterset_class    = ShoeFilter
 
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = ShoeFilter
 
-
-# ✅ Categories (derived)
 @api_view(['GET'])
 def categories(request):
-    categories = [
-        {"name": key, "label": value}
-        for key, value in Shoe.CATEGORY_CHOICES
-    ]
-    return Response(categories)
- 
- 
-# shoes details
+    cats = [{"name": k, "label": v} for k, v in Shoe.CATEGORY_CHOICES]
+    return Response(cats)
+
+
 @api_view(['GET'])
 def shoe_detail(request, id):
     try:
-        shoe = Shoe.objects.get(id=id)
+        shoe = Shoe.objects.prefetch_related('sizes').get(id=id)
         return Response(ShoeSerializer(shoe).data)
     except Shoe.DoesNotExist:
-        return Response({"error": "Not found"}, status=404)
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
-# ✅ New Launch (latest shoe)
+
 @api_view(['GET'])
 def latest_shoe(request):
-    shoe = Shoe.objects.filter(is_active=True).order_by('-created_at').first()
+    """Shoe marked ⭐ New Launch, or the most recently added active shoe."""
+    shoe = (
+        Shoe.objects.filter(is_active=True, is_new_launch=True)
+                    .prefetch_related('sizes')
+                    .order_by('-created_at')
+                    .first()
+        or
+        Shoe.objects.filter(is_active=True)
+                    .prefetch_related('sizes')
+                    .order_by('-created_at')
+                    .first()
+    )
+    if not shoe:
+        return Response({"error": "No shoes found"}, status=status.HTTP_404_NOT_FOUND)
     return Response(ShoeSerializer(shoe).data)
 
 
-# ✅ Timely Shop 
 @api_view(['GET'])
 def timely_shoes(request):
-    now = timezone.now()
+    """All shoes marked 🕐 Timely Shop, respecting optional date window."""
+    now   = timezone.now()
+    shoes = Shoe.objects.filter(is_active=True, is_timely_shop=True).prefetch_related('sizes')
 
-    shoes = Shoe.objects.filter(
-        is_active=True,
-        availability_start__lte=now,
-        availability_end__gte=now,
-        stock__gt=0
-    )
+    result = []
+    for shoe in shoes:
+        start_ok = shoe.availability_start is None or shoe.availability_start <= now
+        end_ok   = shoe.availability_end   is None or shoe.availability_end   >= now
+        if start_ok and end_ok:
+            result.append(shoe)
 
-    return Response(ShoeSerializer(shoes, many=True).data)
+    return Response(ShoeSerializer(result, many=True).data)
